@@ -1,5 +1,6 @@
 const AssistantV2 = require('ibm-watson/assistant/v2');
 const { IamAuthenticator } = require('ibm-watson/auth');
+const cors = require('cors');
 
 const assistant = new AssistantV2({
     version: '2020-09-24',
@@ -10,12 +11,15 @@ const assistant = new AssistantV2({
 });
 
 const express = require('express');
+const { response } = require('express');
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({
     extended: true
 }));
+app.use(express.static('./public'))
+app.use(cors())
 
 const port = 3000;
 let session_id;
@@ -36,22 +40,21 @@ app.get('/conversation/:text*?', (req, res) => {
     res.json(text);
 });
 
-app.post('/conversation/', (req, res) => {
+app.post('/conversation/', (req, response) => {
     const { text, context = {} } = req.body;
-
     assistant.message({
         assistantId: '20fb953c-5235-4856-9cfe-40bf9087d1d8',
         sessionId: `${session_id}`,
         input: {
           'message_type': 'text',
-          'text': 'Olá, gostaria de pedir uma pizza'
+          'text': text
           }
         })
         .then(res => {
-          console.log(JSON.stringify(res.result, null, 2));
+          response.send(res.result);
         })
         .catch(err => {
-          console.log(err);
+            console.log(err);
         });
 });
 
